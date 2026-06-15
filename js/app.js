@@ -4,6 +4,7 @@
 
 // Elements
 const addressInput = document.getElementById("addressInput");
+const emailInput = document.getElementById("emailInput");
 const saveAddressBtn = document.getElementById("saveAddressBtn");
 const addressStatus = document.getElementById("addressStatus");
 
@@ -16,108 +17,66 @@ const calendarContainer = document.getElementById("calendarContainer");
 const notificationToggle = document.getElementById("notifyToggle");
 const notificationSection = document.getElementById("notification-section");
 
-
 // ---------------------------------------
 // 1. Waste collection data
 // ---------------------------------------
 
 let wasteSchedule = {};
 
-console.log("ADDRESS:", document.getElementById("addressInput").value);
-console.log("EMAIL:", document.getElementById("emailInput").value);
 console.log("NEW VERSION LOADED");
 
-async function loadScheduleFromAzure() {
-    try {
-        const response = await fetch(
-    "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
-    {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            street: document.getElementById("addressInput").value,
-            email: document.getElementById("emailInput").value
-        })
-    }
-);
-
-        const csvText = await response.text();
-
-        parseScheduleCSV(csvText);
-
-        loadNextCollection();
-        generateCalendar("general");
-
-    } catch (error) {
-        console.error("Failed to load schedule:", error);
-    }
-}
-
-function parseScheduleCSV(csvText) {
-    const rows = csvText.trim().split("\n").slice(1);
-
-    wasteSchedule = {};
-
-    rows.forEach(row => {
-        const [street, date, type] = row.split(",");
-
-        if (!wasteSchedule[type]) {
-            wasteSchedule[type] = [];
-        }
-
-        wasteSchedule[type].push(date);
-    });
-}
-
-
 // ---------------------------------------
-// 2. Save address
+// 2. SAVE SUBSCRIPTION (MAIN FUNCTION)
 // ---------------------------------------
 
 saveAddressBtn.addEventListener("click", async () => {
 
     const address = addressInput.value.trim();
-    const email = document.getElementById("emailInput").value.trim();
+    const email = emailInput.value.trim();
 
-    if (address.length < 3 || email.length < 5) {
-        addressStatus.textContent = "Please enter valid data.";
+    console.log("ADDRESS:", address);
+    console.log("EMAIL:", email);
+
+    if (!address || !email || address.length < 3 || email.length < 5) {
+        addressStatus.textContent = "Please enter valid address and email.";
         return;
     }
 
     try {
         const response = await fetch(
-    "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
-    {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            street: address,
-            email: email
-        })
-    }
-);
+            "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    street: address,
+                    email: email
+                })
+            }
+        );
 
         const data = await response.json();
 
-        addressStatus.textContent = data.message;
+        if (!response.ok) {
+            throw new Error(data.message || "Request failed");
+        }
+
+        addressStatus.textContent = data.message || "Subscription saved!";
 
         localStorage.setItem("userAddress", address);
 
         showAppSections();
 
     } catch (error) {
-        console.error(error);
+        console.error("ERROR:", error);
         addressStatus.textContent = "Error sending data.";
     }
 });
 
-
 // ---------------------------------------
-// 3. Load saved address on startup
+// 3. UI LOGIC
 // ---------------------------------------
 
 function showAppSections() {
@@ -129,9 +88,11 @@ function showAppSections() {
     generateCalendar("general");
 }
 
-(function init() {
+// ---------------------------------------
+// 4. INIT
+// ---------------------------------------
 
-    loadScheduleFromAzure();
+(function init() {
 
     const savedAddress = localStorage.getItem("userAddress");
     const savedNotify = localStorage.getItem("notifyEnabled");
@@ -144,22 +105,34 @@ function showAppSections() {
     if (savedNotify === "true") {
         notificationToggle.checked = true;
     }
+
+    console.log("App initialized");
 })();
 
-
 // ---------------------------------------
-// 4. Calculate next collection day
+// 5. NEXT COLLECTION (MOCK DATA)
 // ---------------------------------------
 
 function loadNextCollection() {
+
     const today = new Date();
+
+    const mockSchedule = {
+        general: ["2026-06-16", "2026-06-23"],
+        plastic: ["2026-06-18"],
+        paper: ["2026-06-20"],
+        glass: ["2026-06-21"],
+        bio: ["2026-06-17"]
+    };
+
     let nextDate = null;
     let nextType = null;
 
-    for (const type in wasteSchedule) {
-        wasteSchedule[type].forEach(dateStr => {
+    for (const type in mockSchedule) {
+        mockSchedule[type].forEach(dateStr => {
             const date = new Date(dateStr);
-            if (date >= today && (!nextDate || date < nextDate)) {
+
+            if (!nextDate || (date >= today && date < nextDate)) {
                 nextDate = date;
                 nextType = type;
             }
@@ -175,25 +148,27 @@ function loadNextCollection() {
     }
 }
 
-
 // ---------------------------------------
-// 5. Waste type buttons → update calendar
+// 6. CALENDAR
 // ---------------------------------------
 
 document.querySelectorAll(".waste-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-        const type = btn.dataset.type;
-        generateCalendar(type);
+        generateCalendar(btn.dataset.type);
     });
 });
 
-
-// ---------------------------------------
-// 6. Simple calendar generator
-// ---------------------------------------
-
 function generateCalendar(type) {
-    const dates = wasteSchedule[type];
+
+    const mockSchedule = {
+        general: ["2026-06-16", "2026-06-23"],
+        plastic: ["2026-06-18"],
+        paper: ["2026-06-20"],
+        glass: ["2026-06-21"],
+        bio: ["2026-06-17"]
+    };
+
+    const dates = mockSchedule[type] || [];
 
     calendarContainer.innerHTML = `
         <h3>${type.toUpperCase()} collection days</h3>
@@ -203,9 +178,8 @@ function generateCalendar(type) {
     `;
 }
 
-
 // ---------------------------------------
-// 7. Notification toggle
+// 7. NOTIFICATIONS
 // ---------------------------------------
 
 notificationToggle.addEventListener("change", () => {
