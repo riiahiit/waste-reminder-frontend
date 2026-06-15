@@ -30,10 +30,10 @@ const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/sche
 // ---------------------------------------
 
 async function loadScheduleFromCSV() {
-   console.log("CSV LOADED:", csvText);
     try {
         const response = await fetch(CSV_URL);
-        const csvText = await response.text();
+
+        const csvText = await response.text(); 
 
         parseScheduleCSV(csvText);
 
