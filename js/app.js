@@ -95,15 +95,16 @@ function showUI() {
 ------------------------------ */
 saveAddressBtn.addEventListener("click", async () => {
   try {
+    const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     const street = addressInput.value.trim();
     const email = emailInput.value.trim();
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
 
     console.log("SAVE CLICKED");
     console.log("street:", street);
     console.log("email:", email);
+
     console.log("valid?", validStreets.has(street));
     console.log("regex street ok:", streetRegex.test(street));
     console.log("email ok:", emailRegex.test(email));
@@ -124,7 +125,7 @@ saveAddressBtn.addEventListener("click", async () => {
     }
 
     if (!validStreets.has(street)) {
-      addressStatus.textContent = "Please select a valid street from list";
+      addressStatus.textContent = "Please select a valid street";
       return;
     }
 
@@ -146,7 +147,7 @@ saveAddressBtn.addEventListener("click", async () => {
     renderData();
 
   } catch (err) {
-    console.error("FETCH ERROR:", err);
+    console.error("ERROR:", err);
   }
 });
 
