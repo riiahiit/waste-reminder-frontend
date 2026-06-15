@@ -22,8 +22,15 @@
             <h2>Enter your address</h2>
             <p>We will show you the waste collection schedule for your location.</p>
 
-            <input type="text" id="addressInput" placeholder="Enter street name" />
-            <input type="email" id="emailInput" placeholder="Enter e-mail address" required />
+            <input
+              type="text"
+              id="addressInput"
+              list="streetList"
+              placeholder="Enter street name"
+              autocomplete="off">
+            
+            <datalist id="streetList"></datalist>
+            <input type="email" id="emailInput" placeholder="Enter email address" required />
 
             <button id="saveAddressBtn">Save</button>
 
