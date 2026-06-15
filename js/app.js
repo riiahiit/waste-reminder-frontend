@@ -94,42 +94,43 @@ function showUI() {
    SAVE ADDRESS
 ------------------------------ */
 saveAddressBtn.addEventListener("click", async () => {
-  const street = addressInput.value.trim();
-  const email = emailInput.value.trim();
-
-  console.log("street:", street);
-  console.log("email:", email);
-  console.log("valid?", validStreets.has(street));
-  console.log("regex street ok:", streetRegex.test(street));
-  console.log("email ok:", emailRegex.test(email));
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
-
-  if (!street || !email) {
-    addressStatus.textContent = "Enter street and email";
-    return;
-  }
-
-  if (!streetRegex.test(street)) {
-    addressStatus.textContent = "Street contains invalid characters";
-    return;
-  }
-
-  if (!emailRegex.test(email)) {
-    addressStatus.textContent = "Enter a valid email address";
-    return;
-  }
-
-  if (!validStreets.has(street)) {
-    addressStatus.textContent = "Please select a valid street from list";
-    return;
-  }
-
-  currentStreet = street;
-
   try {
-    await fetch(
+    const street = addressInput.value.trim();
+    const email = emailInput.value.trim();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
+
+    console.log("SAVE CLICKED");
+    console.log("street:", street);
+    console.log("email:", email);
+    console.log("valid?", validStreets.has(street));
+    console.log("regex street ok:", streetRegex.test(street));
+    console.log("email ok:", emailRegex.test(email));
+
+    if (!street || !email) {
+      addressStatus.textContent = "Enter street and email";
+      return;
+    }
+
+    if (!streetRegex.test(street)) {
+      addressStatus.textContent = "Street contains invalid characters";
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      addressStatus.textContent = "Enter a valid email address";
+      return;
+    }
+
+    if (!validStreets.has(street)) {
+      addressStatus.textContent = "Please select a valid street from list";
+      return;
+    }
+
+    currentStreet = street;
+
+    const res = await fetch(
       "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
       {
         method: "POST",
@@ -138,12 +139,14 @@ saveAddressBtn.addEventListener("click", async () => {
       }
     );
 
+    console.log("FETCH STATUS:", res.status);
+
     addressStatus.textContent = "Subscribed ✔";
     showUI();
     renderData();
+
   } catch (err) {
-    console.error(err);
-    addressStatus.textContent = "Error sending data.";
+    console.error("FETCH ERROR:", err);
   }
 });
 
