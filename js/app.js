@@ -71,13 +71,20 @@ function renderData() {
 }
 
 saveAddressBtn.addEventListener("click", async () => {
-  const street = addressInput.value.trim();
-  const email = emailInput.value.trim();
+const street = addressInput.value.trim();
+const email = emailInput.value.trim();
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
 
 if (!street || !email) {
   addressStatus.textContent = "Enter street and email";
+  return;
+}
+
+if (!streetRegex.test(street)) {
+  addressStatus.textContent =
+    "Street contains invalid characters (use letters, numbers, ČĆŠŽĐ allowed)";
   return;
 }
 
