@@ -25,6 +25,7 @@ let wasteSchedule = {};
 
 console.log("ADDRESS:", document.getElementById("addressInput").value);
 console.log("EMAIL:", document.getElementById("emailInput").value);
+console.log("NEW VERSION LOADED");
 
 async function loadScheduleFromAzure() {
     try {
