@@ -1,8 +1,3 @@
-/* ---------------------------------------
-   Waste Collection Reminder – app.js
----------------------------------------- */
-
-// Elements
 const addressInput = document.getElementById("addressInput");
 const emailInput = document.getElementById("emailInput");
 const saveAddressBtn = document.getElementById("saveAddressBtn");
@@ -17,43 +12,38 @@ const calendarContainer = document.getElementById("calendarContainer");
 const notificationToggle = document.getElementById("notifyToggle");
 const notificationSection = document.getElementById("notification-section");
 
-// ---------------------------------------
-// 1. REAL DATA FROM AZURE CSV
-// ---------------------------------------
+let currentStreet = null;
 
 let wasteSchedule = {};
 
 const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
-// ---------------------------------------
-// LOAD CSV FROM AZURE STORAGE
-// ---------------------------------------
-
 async function loadScheduleFromCSV() {
     try {
         const response = await fetch(CSV_URL);
-
         const csvText = await response.text();
-        console.log("CSV LOADED:", csvText);
-
         parseScheduleCSV(csvText);
 
-        loadNextCollection();
-        generateCalendar("general");
+        if (currentStreet) {
+            filterAndRender();
+        }
 
     } catch (error) {
         console.error("CSV load error:", error);
     }
 }
-// ---------------------------------------
-// PARSE CSV
-// ---------------------------------------
 
 function parseScheduleCSV(csvText) {
 
     const rows = csvText.trim().split("\n").slice(1);
 
-    wasteSchedule = {};
+    wasteSchedule = {
+        plastic: [],
+        paper: [],
+        glass: [],
+        bio: [],
+        mixed: []
+    };
 
     rows.forEach(row => {
 
@@ -63,15 +53,12 @@ function parseScheduleCSV(csvText) {
             wasteSchedule[type] = [];
         }
 
-        wasteSchedule[type].push(date);
+        wasteSchedule[type].push({
+            street,
+            date
+        });
     });
-
-    console.log("PARSED SCHEDULE:", wasteSchedule);
 }
-
-// ---------------------------------------
-// SAVE SUBSCRIPTION
-// ---------------------------------------
 
 saveAddressBtn.addEventListener("click", async () => {
 
@@ -82,6 +69,8 @@ saveAddressBtn.addEventListener("click", async () => {
         addressStatus.textContent = "Please enter valid data.";
         return;
     }
+
+    currentStreet = address;
 
     try {
         const response = await fetch(
@@ -106,15 +95,13 @@ saveAddressBtn.addEventListener("click", async () => {
 
         showAppSections();
 
+        filterAndRender();
+
     } catch (error) {
         console.error(error);
         addressStatus.textContent = "Error sending data.";
     }
 });
-
-// ---------------------------------------
-// UI
-// ---------------------------------------
 
 function showAppSections() {
     nextCollectionSection.classList.remove("hidden");
@@ -122,37 +109,51 @@ function showAppSections() {
     notificationSection.classList.remove("hidden");
 }
 
-// ---------------------------------------
-// INIT
-// ---------------------------------------
-
 (function init() {
 
     const savedAddress = localStorage.getItem("userAddress");
 
     if (savedAddress) {
         addressInput.value = savedAddress;
-        showAppSections();
+        currentStreet = savedAddress;
     }
 
-    loadScheduleFromCSV();
+    loadScheduleFromCSV().then(() => {
+        if (currentStreet) {
+            showAppSections();
+            filterAndRender();
+        }
+    });
 
 })();
 
-// ---------------------------------------
-// NEXT COLLECTION
-// ---------------------------------------
+function filterAndRender() {
 
-function loadNextCollection() {
+    const filtered = {};
+
+    for (const type in wasteSchedule) {
+
+        filtered[type] = (wasteSchedule[type] || []).filter(item => {
+            return item.street === currentStreet;
+        });
+    }
+
+    loadNextCollection(filtered);
+    generateCalendar(filtered);
+}
+
+function loadNextCollection(data) {
 
     const today = new Date();
 
     let nextDate = null;
     let nextType = null;
 
-    for (const type in wasteSchedule) {
-        wasteSchedule[type].forEach(dateStr => {
-            const date = new Date(dateStr);
+    for (const type in data) {
+
+        data[type].forEach(item => {
+
+            const date = new Date(item.date);
 
             if (!nextDate || (date >= today && date < nextDate)) {
                 nextDate = date;
@@ -170,19 +171,15 @@ function loadNextCollection() {
     }
 }
 
-// ---------------------------------------
-// CALENDAR
-// ---------------------------------------
-
 document.querySelectorAll(".waste-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-        generateCalendar(btn.dataset.type);
+        generateCalendar(filteredData, btn.dataset.type);
     });
 });
 
-function generateCalendar(type) {
+function generateCalendar(data, type = "general") {
 
-    const dates = wasteSchedule[type] || [];
+    const dates = (data?.[type] || []).map(x => x.date);
 
     calendarContainer.innerHTML = `
         <h3>${type.toUpperCase()} collection days</h3>
@@ -191,10 +188,6 @@ function generateCalendar(type) {
         </ul>
     `;
 }
-
-// ---------------------------------------
-// NOTIFICATIONS
-// ---------------------------------------
 
 notificationToggle.addEventListener("change", () => {
     localStorage.setItem("notifyEnabled", notificationToggle.checked);
