@@ -18,16 +18,10 @@ const notificationSection = document.getElementById("notification-section");
 
 
 // ---------------------------------------
-// 1. Mock waste collection data
+// 1. Waste collection data
 // ---------------------------------------
 
-const wasteSchedule = {
-    general: ["2024-06-05", "2024-06-12", "2024-06-19"],
-    plastic: ["2024-06-07", "2024-06-21"],
-    paper: ["2024-06-10", "2024-06-24"],
-    glass: ["2024-06-15"],
-    bio: ["2024-06-04", "2024-06-11", "2024-06-18"]
-};
+let wasteSchedule = {};
 
 
 // ---------------------------------------
