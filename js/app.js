@@ -12,6 +12,9 @@ const notificationToggle = document.getElementById("notifyToggle");
 let currentStreet = null;
 let wasteData = [];
 
+const streetList = document.getElementById("streetList");
+const validStreets = new Set();
+
 const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
 async function loadCSV() {
@@ -27,10 +30,24 @@ async function loadCSV() {
         const [street, date, type] = row.split(",").map((x) => x.trim());
         return { street, date, type };
       });
+
+    wasteData.forEach(item => {
+  validStreets.add(item.street);
+});
+
+const sortedStreets = [...validStreets].sort((a, b) =>
+  a.localeCompare(b, "cs")
+);
+
+streetList.innerHTML = sortedStreets
+  .map(street => `<option value="${street}">`)
+  .join("");
   } catch (err) {
     console.error("CSV error:", err);
   }
 }
+
+
 
 function showUI() {
   calendarSection.classList.remove("hidden");
@@ -93,7 +110,12 @@ if (!emailRegex.test(email)) {
   return;
 }
 
-  currentStreet = street;
+if (!validStreets.has(street)) {
+  addressStatus.textContent = "Please select a street from the list";
+  return;
+}
+
+currentStreet = street;
 
   try {
     await fetch(
