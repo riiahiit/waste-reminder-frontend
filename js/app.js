@@ -7,18 +7,21 @@ const calendarSection = document.getElementById("calendar-section");
 const calendarContainer = document.getElementById("calendarContainer");
 
 const notificationSection = document.getElementById("notification-section");
-const notificationToggle = document.getElementById("notifyToggle");
+
+const streetList = document.getElementById("streetList");
 
 let currentStreet = null;
 let wasteData = [];
-
-const streetList = document.getElementById("streetList");
 const validStreets = new Set();
 
 console.log("APP LOADED");
 
-const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
+const CSV_URL =
+  "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
+/* -----------------------------
+   LOAD CSV
+------------------------------ */
 async function loadCSV() {
   try {
     const res = await fetch(CSV_URL);
@@ -33,32 +36,56 @@ async function loadCSV() {
         return { street, date, type };
       });
 
-    wasteData.forEach(item => {
-  validStreets.add(item.street);
-});
+    // extract streets
+    wasteData.forEach((item) => validStreets.add(item.street));
 
-const sortedStreets = [...validStreets].sort((a, b) =>
-  a.localeCompare(b, "cs")
-);
+    updateStreetList([...validStreets]);
 
-streetList.innerHTML = sortedStreets
-  .map(street => `<option value="${street}">`)
-  .join("");
-    
-  console.log("STREETS LOADED:", sortedStreets.length);
-  console.log(sortedStreets.slice(0, 10));
+    console.log("STREETS LOADED:", validStreets.size);
   } catch (err) {
     console.error("CSV error:", err);
   }
 }
 
+/* -----------------------------
+   UPDATE DATALIST
+------------------------------ */
+function updateStreetList(streets) {
+  streetList.innerHTML = streets
+    .slice(0, 50)
+    .map((street) => `<option value="${street}">`)
+    .join("");
+}
 
+/* -----------------------------
+   LIVE AUTOCOMPLETE FILTER
+------------------------------ */
+addressInput.addEventListener("input", () => {
+  const value = addressInput.value.toLowerCase();
 
+  if (!value) {
+    updateStreetList([...validStreets]);
+    return;
+  }
+
+  const filtered = [...validStreets]
+    .filter((street) => street.toLowerCase().startsWith(value))
+    .sort((a, b) => a.localeCompare(b, "cs"));
+
+  updateStreetList(filtered);
+});
+
+/* -----------------------------
+   UI HELPERS
+------------------------------ */
 function showUI() {
   calendarSection.classList.remove("hidden");
   notificationSection.classList.remove("hidden");
 }
 
+/* -----------------------------
+   RENDER SCHEDULE
+------------------------------ */
 function renderData() {
   if (!currentStreet) return;
 
@@ -77,8 +104,7 @@ function renderData() {
   });
 
   const priority = ["mixed", "plastic", "paper", "glass", "bio"];
-
-  const firstType =priority.find(t => grouped[t]) || Object.keys(grouped)[0];
+  const firstType = priority.find((t) => grouped[t]) || Object.keys(grouped)[0];
 
   if (firstType) {
     calendarContainer.innerHTML = `
@@ -92,35 +118,40 @@ function renderData() {
   }
 }
 
+/* -----------------------------
+   SAVE ADDRESS
+------------------------------ */
 saveAddressBtn.addEventListener("click", async () => {
-const street = addressInput.value.trim();
-const email = emailInput.value.trim();
+  const street = addressInput.value.trim();
+  const email = emailInput.value.trim();
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
 
-if (!street || !email) {
-  addressStatus.textContent = "Enter street and email";
-  return;
-}
+  if (!street || !email) {
+    addressStatus.textContent = "Enter street and email";
+    return;
+  }
 
-if (!streetRegex.test(street)) {
-  addressStatus.textContent =
-    "Street contains invalid characters (use letters, numbers, ČĆŠŽĐ allowed)";
-  return;
-}
+  if (!streetRegex.test(street)) {
+    addressStatus.textContent =
+      "Street contains invalid characters";
+    return;
+  }
 
-if (!emailRegex.test(email)) {
-  addressStatus.textContent = "Enter a valid email address";
-  return;
-}
+  if (!emailRegex.test(email)) {
+    addressStatus.textContent = "Enter a valid email address";
+    return;
+  }
 
-if (!validStreets.has(street)) {
-  addressStatus.textContent = "Please select a street from the list";
-  return;
-}
+  // IMPORTANT: only allow real streets
+  if (!validStreets.has(street)) {
+    addressStatus.textContent =
+      "Please select a valid street from the list";
+    return;
+  }
 
-currentStreet = street;
+  currentStreet = street;
 
   try {
     await fetch(
@@ -128,11 +159,11 @@ currentStreet = street;
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ street, email })
+        body: JSON.stringify({ street, email }),
       }
     );
 
-    addressStatus.textContent = "Subscribed!";
+    addressStatus.textContent = "Subscribed ✔";
     showUI();
     renderData();
   } catch (err) {
@@ -141,6 +172,9 @@ currentStreet = street;
   }
 });
 
+/* -----------------------------
+   WASTE TYPE FILTER BUTTONS
+------------------------------ */
 document.querySelectorAll(".waste-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (!currentStreet) return;
@@ -162,6 +196,9 @@ document.querySelectorAll(".waste-btn").forEach((btn) => {
   });
 });
 
+/* -----------------------------
+   INIT
+------------------------------ */
 (async function init() {
   await loadCSV();
 })();
