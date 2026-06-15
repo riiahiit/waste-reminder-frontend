@@ -42,6 +42,9 @@ const sortedStreets = [...validStreets].sort((a, b) =>
 streetList.innerHTML = sortedStreets
   .map(street => `<option value="${street}">`)
   .join("");
+    
+  console.log("STREETS LOADED:", sortedStreets.length);
+  console.log(sortedStreets.slice(0, 10));
   } catch (err) {
     console.error("CSV error:", err);
   }
@@ -157,6 +160,6 @@ document.querySelectorAll(".waste-btn").forEach((btn) => {
   });
 });
 
-(function init() {
-  loadCSV();
+(async function init() {
+  await loadCSV();
 })();
