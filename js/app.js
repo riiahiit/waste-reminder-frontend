@@ -34,18 +34,43 @@ const wasteSchedule = {
 // 2. Save address
 // ---------------------------------------
 
-saveAddressBtn.addEventListener("click", () => {
-    const address = addressInput.value.trim();
+saveAddressBtn.addEventListener("click", async () => {
 
-    if (address.length < 3) {
-        addressStatus.textContent = "Please enter a valid address.";
+    const address = addressInput.value.trim();
+    const email = document.getElementById("emailInput").value.trim();
+
+    if (address.length < 3 || email.length < 5) {
+        addressStatus.textContent = "Please enter valid data.";
         return;
     }
 
-    localStorage.setItem("userAddress", address);
-    addressStatus.textContent = "Address saved!";
-    
-    showAppSections();
+    try {
+        const response = await fetch(
+            "https://YOUR-FUNCTION-APP.azurewebsites.net/api/subscribe",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    street: address,
+                    email: email
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        addressStatus.textContent = data.message;
+
+        localStorage.setItem("userAddress", address);
+
+        showAppSections();
+
+    } catch (error) {
+        console.error(error);
+        addressStatus.textContent = "Error sending data.";
+    }
 });
 
 
