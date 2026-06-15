@@ -23,6 +23,41 @@ const notificationSection = document.getElementById("notification-section");
 
 let wasteSchedule = {};
 
+async function loadScheduleFromAzure() {
+    try {
+        const response = await fetch(
+            "https://YOUR-STORAGE-URL/schedule_clean.csv"
+        );
+
+        const csvText = await response.text();
+
+        parseScheduleCSV(csvText);
+
+        // refresh UI after load
+        loadNextCollection();
+        generateCalendar("general");
+
+    } catch (error) {
+        console.error("Failed to load schedule:", error);
+    }
+}
+
+function parseScheduleCSV(csvText) {
+    const rows = csvText.trim().split("\n").slice(1);
+
+    wasteSchedule = {};
+
+    rows.forEach(row => {
+        const [street, date, type] = row.split(",");
+
+        if (!wasteSchedule[type]) {
+            wasteSchedule[type] = [];
+        }
+
+        wasteSchedule[type].push(date);
+    });
+}
+
 
 // ---------------------------------------
 // 2. Save address
@@ -40,7 +75,7 @@ saveAddressBtn.addEventListener("click", async () => {
 
     try {
         const response = await fetch(
-            "https://YOUR-FUNCTION-APP.azurewebsites.net/api/subscribe",
+            "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean (17).csv",
             {
                 method: "POST",
                 headers: {
@@ -82,6 +117,9 @@ function showAppSections() {
 }
 
 (function init() {
+
+    loadScheduleFromAzure();
+
     const savedAddress = localStorage.getItem("userAddress");
     const savedNotify = localStorage.getItem("notifyEnabled");
 
