@@ -87,18 +87,18 @@ saveAddressBtn.addEventListener("click", async () => {
 
     try {
         const response = await fetch(
-            "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    street: address,
-                    email: email
-                })
-            }
-        );
+    "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            street: address,
+            email: email
+        })
+    }
+);
 
         const data = await response.json();
 
