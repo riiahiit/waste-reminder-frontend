@@ -3,9 +3,6 @@ const emailInput = document.getElementById("emailInput");
 const saveAddressBtn = document.getElementById("saveAddressBtn");
 const addressStatus = document.getElementById("addressStatus");
 
-const nextCollectionSection = document.getElementById("next-collection");
-const nextCollectionInfo = document.getElementById("nextCollectionInfo");
-
 const calendarSection = document.getElementById("calendar-section");
 const calendarContainer = document.getElementById("calendarContainer");
 
@@ -36,7 +33,6 @@ async function loadCSV() {
 }
 
 function showUI() {
-  nextCollectionSection.classList.remove("hidden");
   calendarSection.classList.remove("hidden");
   notificationSection.classList.remove("hidden");
 }
@@ -47,7 +43,6 @@ function renderData() {
   const userData = wasteData.filter((x) => x.street === currentStreet);
 
   if (userData.length === 0) {
-    nextCollectionInfo.innerHTML = "No data for this street";
     calendarContainer.innerHTML = "";
     return;
   }
