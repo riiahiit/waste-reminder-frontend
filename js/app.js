@@ -23,17 +23,29 @@ const notificationSection = document.getElementById("notification-section");
 
 let wasteSchedule = {};
 
+console.log("ADDRESS:", document.getElementById("addressInput").value);
+console.log("EMAIL:", document.getElementById("emailInput").value);
+
 async function loadScheduleFromAzure() {
     try {
         const response = await fetch(
-            "https://YOUR-STORAGE-URL/schedule_clean.csv"
-        );
+    "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            street: document.getElementById("addressInput").value,
+            email: document.getElementById("emailInput").value
+        })
+    }
+);
 
         const csvText = await response.text();
 
         parseScheduleCSV(csvText);
 
-        // refresh UI after load
         loadNextCollection();
         generateCalendar("general");
 
