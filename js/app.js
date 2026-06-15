@@ -100,6 +100,8 @@ saveAddressBtn.addEventListener("click", async () => {
   console.log("street:", street);
   console.log("email:", email);
   console.log("valid?", validStreets.has(street));
+  console.log("regex street ok:", streetRegex.test(street));
+  console.log("email ok:", emailRegex.test(email));
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const streetRegex = /^[a-zA-Z0-9\sÀ-žÁ-žČčĆćĐđŠšŽž\-\/]+$/;
