@@ -15,6 +15,8 @@ let wasteData = [];
 const streetList = document.getElementById("streetList");
 const validStreets = new Set();
 
+console.log("APP LOADED");
+
 const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
 async function loadCSV() {
