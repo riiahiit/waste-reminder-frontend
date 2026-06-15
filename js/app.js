@@ -15,12 +15,8 @@ const notificationToggle = document.getElementById("notifyToggle");
 let currentStreet = null;
 let wasteData = [];
 
-const CSV_URL =
-  "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
+const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
-// -----------------------------
-// LOAD CSV
-// -----------------------------
 async function loadCSV() {
   try {
     const res = await fetch(CSV_URL);
@@ -39,51 +35,12 @@ async function loadCSV() {
   }
 }
 
-// -----------------------------
-// SAVE SUBSCRIPTION
-// -----------------------------
-saveAddressBtn.addEventListener("click", async () => {
-  const street = addressInput.value.trim();
-  const email = emailInput.value.trim();
-
-  if (!street || !email) {
-    addressStatus.textContent = "Enter street and email";
-    return;
-  }
-
-  currentStreet = street;
-
-  try {
-    await fetch(
-      "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ street, email }),
-      }
-    );
-
-    addressStatus.textContent = "Subscribed!";
-    showUI();
-    renderData();
-  } catch (err) {
-    console.error(err);
-    addressStatus.textContent = "Error sending data.";
-  }
-});
-
-// -----------------------------
-// SHOW UI
-// -----------------------------
 function showUI() {
   nextCollectionSection.classList.remove("hidden");
   calendarSection.classList.remove("hidden");
   notificationSection.classList.remove("hidden");
 }
 
-// -----------------------------
-// FILTER + RENDER
-// -----------------------------
 function renderData() {
   if (!currentStreet) return;
 
@@ -95,13 +52,14 @@ function renderData() {
     return;
   }
 
-  // NEXT COLLECTION
   const today = new Date();
   let next = null;
 
   userData.forEach((x) => {
     const d = new Date(x.date);
-    if (!next || (d >= today && d < next)) next = d;
+    if (d >= today && (!next || d < next)) {
+      next = d;
+    }
   });
 
   if (next) {
@@ -111,7 +69,6 @@ function renderData() {
     `;
   }
 
-  // CALENDAR (default first type)
   const grouped = {};
   userData.forEach((x) => {
     if (!grouped[x.type]) grouped[x.type] = [];
@@ -132,9 +89,36 @@ function renderData() {
   }
 }
 
-// -----------------------------
-// BUTTONS (calendar switch)
-// -----------------------------
+saveAddressBtn.addEventListener("click", async () => {
+  const street = addressInput.value.trim();
+  const email = emailInput.value.trim();
+
+  if (!street || !email) {
+    addressStatus.textContent = "Enter street and email";
+    return;
+  }
+
+  currentStreet = street;
+
+  try {
+    await fetch(
+      "https://waste-reminder-naida-c3e5e8d0cra8h3c5.westeurope-01.azurewebsites.net/api/subscribe",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ street, email })
+      }
+    );
+
+    addressStatus.textContent = "Subscribed!";
+    showUI();
+    renderData();
+  } catch (err) {
+    console.error(err);
+    addressStatus.textContent = "Error sending data.";
+  }
+});
+
 document.querySelectorAll(".waste-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (!currentStreet) return;
@@ -156,9 +140,6 @@ document.querySelectorAll(".waste-btn").forEach((btn) => {
   });
 });
 
-// -----------------------------
-// INIT
-// -----------------------------
 (function init() {
-  loadCSV(); // samo učitaj, ne renderuj ništa
+  loadCSV();
 })();
