@@ -47,24 +47,8 @@ function renderData() {
     return;
   }
 
-  const today = new Date();
-  let next = null;
-
-  userData.forEach((x) => {
-    const d = new Date(x.date);
-    if (d >= today && (!next || d < next)) {
-      next = d;
-    }
-  });
-
-  if (next) {
-    nextCollectionInfo.innerHTML = `
-      <p><strong>Next collection:</strong></p>
-      <p>${next.toDateString()}</p>
-    `;
-  }
-
   const grouped = {};
+
   userData.forEach((x) => {
     if (!grouped[x.type]) grouped[x.type] = [];
     grouped[x.type].push(x.date);
@@ -72,7 +56,7 @@ function renderData() {
 
   const priority = ["mixed", "plastic", "paper", "glass", "bio"];
 
-const firstType = priority.find(t => grouped[t]) || Object.keys(grouped)[0];
+  const firstType =priority.find(t => grouped[t]) || Object.keys(grouped)[0];
 
   if (firstType) {
     calendarContainer.innerHTML = `
