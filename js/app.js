@@ -18,15 +18,54 @@ const notificationToggle = document.getElementById("notifyToggle");
 const notificationSection = document.getElementById("notification-section");
 
 // ---------------------------------------
-// 1. Waste collection data
+// 1. REAL DATA FROM AZURE CSV
 // ---------------------------------------
 
 let wasteSchedule = {};
 
-console.log("NEW VERSION LOADED");
+const CSV_URL = "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv";
 
 // ---------------------------------------
-// 2. SAVE SUBSCRIPTION (MAIN FUNCTION)
+// LOAD CSV FROM AZURE STORAGE
+// ---------------------------------------
+
+async function loadScheduleFromCSV() {
+    try {
+        const response = await fetch(CSV_URL);
+        const csvText = await response.text();
+
+        parseScheduleCSV(csvText);
+
+        loadNextCollection();
+        generateCalendar("general");
+
+    } catch (error) {
+        console.error("CSV load error:", error);
+    }
+}
+
+// ---------------------------------------
+// PARSE CSV
+// ---------------------------------------
+
+function parseScheduleCSV(csvText) {
+    const rows = csvText.trim().split("\n").slice(1);
+
+    wasteSchedule = {};
+
+    rows.forEach(row => {
+        const [street, date, type] = row.split(",");
+
+        if (!wasteSchedule[type]) {
+            wasteSchedule[type] = [];
+        }
+
+        wasteSchedule[type].push(date);
+    });
+}
+
+// ---------------------------------------
+// SAVE SUBSCRIPTION
 // ---------------------------------------
 
 saveAddressBtn.addEventListener("click", async () => {
@@ -34,11 +73,8 @@ saveAddressBtn.addEventListener("click", async () => {
     const address = addressInput.value.trim();
     const email = emailInput.value.trim();
 
-    console.log("ADDRESS:", address);
-    console.log("EMAIL:", email);
-
-    if (!address || !email || address.length < 3 || email.length < 5) {
-        addressStatus.textContent = "Please enter valid address and email.";
+    if (!address || !email) {
+        addressStatus.textContent = "Please enter valid data.";
         return;
     }
 
@@ -59,77 +95,58 @@ saveAddressBtn.addEventListener("click", async () => {
 
         const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.message || "Request failed");
-        }
-
-        addressStatus.textContent = data.message || "Subscription saved!";
+        addressStatus.textContent = data.message || "Subscribed!";
 
         localStorage.setItem("userAddress", address);
 
         showAppSections();
 
     } catch (error) {
-        console.error("ERROR:", error);
+        console.error(error);
         addressStatus.textContent = "Error sending data.";
     }
 });
 
 // ---------------------------------------
-// 3. UI LOGIC
+// UI
 // ---------------------------------------
 
 function showAppSections() {
     nextCollectionSection.classList.remove("hidden");
     calendarSection.classList.remove("hidden");
     notificationSection.classList.remove("hidden");
-
-    loadNextCollection();
-    generateCalendar("general");
 }
 
 // ---------------------------------------
-// 4. INIT
+// INIT
 // ---------------------------------------
 
 (function init() {
 
     const savedAddress = localStorage.getItem("userAddress");
-    const savedNotify = localStorage.getItem("notifyEnabled");
 
     if (savedAddress) {
         addressInput.value = savedAddress;
         showAppSections();
     }
 
-    if (savedNotify === "true") {
-        notificationToggle.checked = true;
-    }
+    loadScheduleFromCSV();
 
-    console.log("App initialized");
 })();
 
 // ---------------------------------------
-// 5. NEXT COLLECTION (MOCK DATA)
+// NEXT COLLECTION
 // ---------------------------------------
 
 function loadNextCollection() {
 
     const today = new Date();
 
-    const mockSchedule = {
-        general: ["2026-06-16", "2026-06-23"],
-        plastic: ["2026-06-18"],
-        paper: ["2026-06-20"],
-        glass: ["2026-06-21"],
-        bio: ["2026-06-17"]
-    };
-
     let nextDate = null;
     let nextType = null;
 
-    for (const type in mockSchedule) {
-        mockSchedule[type].forEach(dateStr => {
+    for (const type in wasteSchedule) {
+        wasteSchedule[type].forEach(dateStr => {
             const date = new Date(dateStr);
 
             if (!nextDate || (date >= today && date < nextDate)) {
@@ -149,7 +166,7 @@ function loadNextCollection() {
 }
 
 // ---------------------------------------
-// 6. CALENDAR
+// CALENDAR
 // ---------------------------------------
 
 document.querySelectorAll(".waste-btn").forEach(btn => {
@@ -160,15 +177,7 @@ document.querySelectorAll(".waste-btn").forEach(btn => {
 
 function generateCalendar(type) {
 
-    const mockSchedule = {
-        general: ["2026-06-16", "2026-06-23"],
-        plastic: ["2026-06-18"],
-        paper: ["2026-06-20"],
-        glass: ["2026-06-21"],
-        bio: ["2026-06-17"]
-    };
-
-    const dates = mockSchedule[type] || [];
+    const dates = wasteSchedule[type] || [];
 
     calendarContainer.innerHTML = `
         <h3>${type.toUpperCase()} collection days</h3>
@@ -179,7 +188,7 @@ function generateCalendar(type) {
 }
 
 // ---------------------------------------
-// 7. NOTIFICATIONS
+// NOTIFICATIONS
 // ---------------------------------------
 
 notificationToggle.addEventListener("change", () => {
