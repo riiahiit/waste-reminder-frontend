@@ -90,6 +90,25 @@ input[type="email"] {
 }
 
 
+.suggestions {
+    border: 1px solid #ddd;
+    background: white;
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+}
+
+.suggestions div {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestions div:hover {
+    background: #eee;
+}
+
 button {
     margin-top: 1rem;
     width: 100%;
