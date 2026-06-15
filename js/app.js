@@ -74,10 +74,17 @@ saveAddressBtn.addEventListener("click", async () => {
   const street = addressInput.value.trim();
   const email = emailInput.value.trim();
 
-  if (!street || !email) {
-    addressStatus.textContent = "Enter street and email";
-    return;
-  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!street || !email) {
+  addressStatus.textContent = "Enter street and email";
+  return;
+}
+
+if (!emailRegex.test(email)) {
+  addressStatus.textContent = "Enter a valid email address";
+  return;
+}
 
   currentStreet = street;
 
