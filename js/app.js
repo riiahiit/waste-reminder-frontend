@@ -3,12 +3,12 @@ const emailInput = document.getElementById("emailInput");
 const saveAddressBtn = document.getElementById("saveAddressBtn");
 const addressStatus = document.getElementById("addressStatus");
 
+const suggestionsBox = document.getElementById("suggestions");
+
 const calendarSection = document.getElementById("calendar-section");
 const calendarContainer = document.getElementById("calendarContainer");
 
 const notificationSection = document.getElementById("notification-section");
-
-const streetList = document.getElementById("streetList");
 
 let currentStreet = null;
 let wasteData = [];
@@ -36,10 +36,7 @@ async function loadCSV() {
         return { street, date, type };
       });
 
-    // extract streets
     wasteData.forEach((item) => validStreets.add(item.street));
-
-    updateStreetList([...validStreets]);
 
     console.log("STREETS LOADED:", validStreets.size);
   } catch (err) {
@@ -48,31 +45,37 @@ async function loadCSV() {
 }
 
 /* -----------------------------
-   UPDATE DATALIST
------------------------------- */
-function updateStreetList(streets) {
-  streetList.innerHTML = streets
-    .slice(0, 50)
-    .map((street) => `<option value="${street}">`)
-    .join("");
-}
-
-/* -----------------------------
-   LIVE AUTOCOMPLETE FILTER
+   AUTOCOMPLETE (CUSTOM)
 ------------------------------ */
 addressInput.addEventListener("input", () => {
   const value = addressInput.value.toLowerCase();
 
   if (!value) {
-    updateStreetList([...validStreets]);
+    suggestionsBox.innerHTML = "";
     return;
   }
 
   const filtered = [...validStreets]
-    .filter((street) => street.toLowerCase().startsWith(value))
-    .sort((a, b) => a.localeCompare(b, "cs"));
+    .filter((s) => s.toLowerCase().startsWith(value))
+    .slice(0, 10);
 
-  updateStreetList(filtered);
+  suggestionsBox.innerHTML = filtered
+    .map((street) => `<div class="suggestion-item">${street}</div>`)
+    .join("");
+
+  document.querySelectorAll(".suggestion-item").forEach((el) => {
+    el.addEventListener("click", () => {
+      addressInput.value = el.textContent;
+      suggestionsBox.innerHTML = "";
+    });
+  });
+});
+
+/* click outside closes suggestions */
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#suggestions") && e.target !== addressInput) {
+    suggestionsBox.innerHTML = "";
+  }
 });
 
 /* -----------------------------
@@ -81,41 +84,6 @@ addressInput.addEventListener("input", () => {
 function showUI() {
   calendarSection.classList.remove("hidden");
   notificationSection.classList.remove("hidden");
-}
-
-/* -----------------------------
-   RENDER SCHEDULE
------------------------------- */
-function renderData() {
-  if (!currentStreet) return;
-
-  const userData = wasteData.filter((x) => x.street === currentStreet);
-
-  if (userData.length === 0) {
-    calendarContainer.innerHTML = "";
-    return;
-  }
-
-  const grouped = {};
-
-  userData.forEach((x) => {
-    if (!grouped[x.type]) grouped[x.type] = [];
-    grouped[x.type].push(x.date);
-  });
-
-  const priority = ["mixed", "plastic", "paper", "glass", "bio"];
-  const firstType = priority.find((t) => grouped[t]) || Object.keys(grouped)[0];
-
-  if (firstType) {
-    calendarContainer.innerHTML = `
-      <h3>${firstType.toUpperCase()}</h3>
-      <ul>
-        ${grouped[firstType]
-          .map((d) => `<li>${new Date(d).toDateString()}</li>`)
-          .join("")}
-      </ul>
-    `;
-  }
 }
 
 /* -----------------------------
@@ -134,8 +102,7 @@ saveAddressBtn.addEventListener("click", async () => {
   }
 
   if (!streetRegex.test(street)) {
-    addressStatus.textContent =
-      "Street contains invalid characters";
+    addressStatus.textContent = "Street contains invalid characters";
     return;
   }
 
@@ -144,10 +111,8 @@ saveAddressBtn.addEventListener("click", async () => {
     return;
   }
 
-  // IMPORTANT: only allow real streets
   if (!validStreets.has(street)) {
-    addressStatus.textContent =
-      "Please select a valid street from the list";
+    addressStatus.textContent = "Please select a valid street from list";
     return;
   }
 
@@ -173,7 +138,37 @@ saveAddressBtn.addEventListener("click", async () => {
 });
 
 /* -----------------------------
-   WASTE TYPE FILTER BUTTONS
+   RENDER SCHEDULE
+------------------------------ */
+function renderData() {
+  if (!currentStreet) return;
+
+  const userData = wasteData.filter((x) => x.street === currentStreet);
+
+  const grouped = {};
+
+  userData.forEach((x) => {
+    if (!grouped[x.type]) grouped[x.type] = [];
+    grouped[x.type].push(x.date);
+  });
+
+  const priority = ["mixed", "plastic", "paper", "glass", "bio"];
+  const firstType = priority.find((t) => grouped[t]) || Object.keys(grouped)[0];
+
+  if (firstType) {
+    calendarContainer.innerHTML = `
+      <h3>${firstType.toUpperCase()}</h3>
+      <ul>
+        ${grouped[firstType]
+          .map((d) => `<li>${new Date(d).toDateString()}</li>`)
+          .join("")}
+      </ul>
+    `;
+  }
+}
+
+/* -----------------------------
+   WASTE TYPE FILTER
 ------------------------------ */
 document.querySelectorAll(".waste-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
