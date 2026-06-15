@@ -33,7 +33,8 @@ async function loadScheduleFromCSV() {
     try {
         const response = await fetch(CSV_URL);
 
-        const csvText = await response.text(); 
+        const csvText = await response.text();
+        console.log("CSV LOADED:", csvText);
 
         parseScheduleCSV(csvText);
 
@@ -44,19 +45,19 @@ async function loadScheduleFromCSV() {
         console.error("CSV load error:", error);
     }
 }
-
 // ---------------------------------------
 // PARSE CSV
 // ---------------------------------------
 
 function parseScheduleCSV(csvText) {
-   console.log("PARSED SCHEDULE:", wasteSchedule);
+
     const rows = csvText.trim().split("\n").slice(1);
 
     wasteSchedule = {};
 
     rows.forEach(row => {
-        const [street, date, type] = row.split(",");
+
+        const [street, date, type] = row.split(",").map(x => x.trim());
 
         if (!wasteSchedule[type]) {
             wasteSchedule[type] = [];
@@ -64,6 +65,8 @@ function parseScheduleCSV(csvText) {
 
         wasteSchedule[type].push(date);
     });
+
+    console.log("PARSED SCHEDULE:", wasteSchedule);
 }
 
 // ---------------------------------------
