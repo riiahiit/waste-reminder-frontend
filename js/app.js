@@ -87,7 +87,7 @@ saveAddressBtn.addEventListener("click", async () => {
 
     try {
         const response = await fetch(
-            "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean (17).csv",
+            "https://wastereminderdata.blob.core.windows.net/waste-data/schedule_clean.csv",
             {
                 method: "POST",
                 headers: {
