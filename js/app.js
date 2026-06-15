@@ -75,7 +75,9 @@ function renderData() {
     grouped[x.type].push(x.date);
   });
 
-  const firstType = Object.keys(grouped)[0];
+  const priority = ["mixed", "plastic", "paper", "glass", "bio"];
+
+const firstType = priority.find(t => grouped[t]) || Object.keys(grouped)[0];
 
   if (firstType) {
     calendarContainer.innerHTML = `
