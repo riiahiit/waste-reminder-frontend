@@ -1,6 +1,10 @@
 const addressInput = document.getElementById("addressInput");
 const emailInput = document.getElementById("emailInput");
 const saveAddressBtn = document.getElementById("saveAddressBtn");
+saveAddressBtn.addEventListener("click", () => {
+  console.log("SAVE CLICKED");
+});
+
 const addressStatus = document.getElementById("addressStatus");
 
 const suggestionsBox = document.getElementById("suggestions");
