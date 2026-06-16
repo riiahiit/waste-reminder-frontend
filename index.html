@@ -42,6 +42,14 @@
         <section id="calendar-section" class="card hidden">
             <h2>Collection schedule</h2>
 
+            <!-- Future range selector -->
+            <label for="rangeSelect">Show future dates:</label>
+            <select id="rangeSelect">
+                <option value="3">Next 3 months</option>
+                <option value="6">Next 6 months</option>
+                <option value="12">Next 12 months</option>
+            </select>
+
             <div id="wasteTypes">
                 <button class="waste-btn" data-type="mixed">Mixed Waste</button>
                 <button class="waste-btn" data-type="plastic">Plastic</button>

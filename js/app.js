@@ -16,6 +16,7 @@ const notificationSection = document.getElementById("notification-section");
 
 let currentStreet = null;
 let wasteData = [];
+let selectedRangeMonths = 3; // default 3 kk
 const validStreets = new Set();
 
 console.log("APP LOADED");
@@ -157,7 +158,15 @@ saveAddressBtn.addEventListener("click", async () => {
 function renderData() {
   if (!currentStreet) return;
 
-  const userData = wasteData.filter((x) => x.street === currentStreet);
+  const now = new Date();
+  const futureLimit = new Date();
+  futureLimit.setMonth(now.getMonth() + selectedRangeMonths);
+
+  const userData = wasteData.filter((x) => {
+    if (x.street !== currentStreet) return false;
+    const d = new Date(x.date);
+    return d >= now && d <= futureLimit; // <-- time filtering
+  });
 
   const grouped = {};
 
@@ -190,9 +199,16 @@ document.querySelectorAll(".waste-btn").forEach((btn) => {
 
     const type = btn.dataset.type;
 
-    const filtered = wasteData.filter(
-      (x) => x.street === currentStreet && x.type === type
-    );
+    const now = new Date();
+    const futureLimit = new Date();
+    futureLimit.setMonth(now.getMonth() + selectedRangeMonths);
+
+    const filtered = wasteData.filter((x) => {
+      if (x.street !== currentStreet || x.type !== type) return false;
+      const d = new Date(x.date);
+      return d >= now && d <= futureLimit;
+    });
+
 
     calendarContainer.innerHTML = `
       <h3>${type.toUpperCase()}</h3>
@@ -204,6 +220,19 @@ document.querySelectorAll(".waste-btn").forEach((btn) => {
     `;
   });
 });
+
+/* -----------------------------
+   FUTURE RANGE FILTER
+------------------------------ */
+const rangeSelect = document.getElementById("rangeSelect");
+
+if (rangeSelect) {
+  rangeSelect.addEventListener("change", () => {
+    selectedRangeMonths = parseInt(rangeSelect.value);
+    renderData(); // piirretään uudelleen valitulla aikavälillä
+  });
+}
+
 
 /* -----------------------------
    INIT
